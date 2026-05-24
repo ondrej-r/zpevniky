@@ -129,11 +129,28 @@
 \songcolumns{1}
 
 % convert from engish notation to german notation
-\notenamesin{A}{B}{C}{D}{E}{F}{G}
-\notenamesout{A}{H}{C}{D}{E}{F}{G}
+% \notenamesin{A}{B}{C}{D}{E}{F}{G}
+% \notenamesout{A}{H}{C}{D}{E}{F}{G}
 
+% \makeatletter
+% \def\SB@bchord#1{%
+%   % Check if the current note has a flat modifier AND the original note name was B
+%   \ifnum\SB@modifier=-\@ne\if\SB@basename{} B%
+%     % If both are true, force the output string to be just "B"
+%     \def\SB@outstring{B}%
+%     % Clear the modifier so it doesn't try to attach a math flat symbol later
+%     \SB@modifier=\z@%
+%   \fi\fi%
+%   % Pass the modified properties back to the original package font-printer
+%   \SB@chordfont\SB@outstring\futurelet\next\SB@echord%
+% }
+% \makeatother
+
+% \renewcommand{\sharpsymbol}{is}
+% \renewcommand{\flatsymbol}{es}
 % ====================================================================
 
+\addsong{Amazonka-Hop_Trop.tex}
 \addsong{Anděl-Karel_Kryl.tex}
 \addsong{Bláznova_ukolébavka.tex}
 

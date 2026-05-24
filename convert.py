@@ -6,6 +6,9 @@ import re
 import sys
 import os
 
+# Updated to securely catch roots containing raw # and & characters alongside original Czech names
+GERMAN_CHORD_REGEX = r'(?:Cis|Dis|Eis|Fis|Gis|Ais|His|cis|dis|eis|fis|gis|ais|his|Ces|Des|Es|Fes|Ges|As|Hes|ces|des|es|fes|ges|as|hes|[A-G|H|bB])[#&]?(?:maj|min|dim|aug|sus|mi|m)?\d*(?:\/(?:Cis|Dis|Eis|Fis|Gis|Ais|His|cis|dis|eis|fis|gis|ais|his|Ces|Des|Es|Fes|Ges|As|Hes|ces|des|es|fes|ges|as|hes|[A-G|H|bB])[#&]?(?:maj|min|dim|aug|sus|mi|m)?\d*)?'
+
 def is_chord_line(line):
     """
     Determines if a text line consists purely of musical chords.
@@ -14,56 +17,52 @@ def is_chord_line(line):
     if not line.strip():
         return False
 
-    # Strip out chords to see if there is any lyrical weight left in the string
-    cleaned = re.sub(r'[A-G|H](?:es|is|[b#&])?(?:m|maj|min|dim|aug|sus)?\d*(\/[A-G|H](?:es|is|[b#&])?)?', '', line)
+    # Strip out chords using the explicit German pattern
+    cleaned = re.sub(GERMAN_CHORD_REGEX, '', line)
     cleaned = re.sub(r'[\s,:\-\(\)\/\|\]\[\d\+]', '', cleaned)
 
     return len(cleaned) == 0
 
 def convert_german_chord(chord_text):
     """
-    Translates German/Czech text notation definitions into English structural representations:
-    - Base 'H' -> 'B'
-    - Base 'B' or 'Hes' -> 'B&'
-    - Suffix 'is' -> '#' (Sharp)
-    - Suffix 'es' or 's' -> '&' (Flat)
+    Translates German/Czech text notation definitions into standard international representations.
+    Maps everything directly to one of your environment's 24 supported structural roots.
     """
     if '/' in chord_text:
         parts = chord_text.split('/')
         return "/".join([convert_german_chord(p) for p in parts])
 
-    match = re.match(r'^([A-G|H])(es|is|s)?(.*)$', chord_text)
+    # Enhanced pattern catches accidentals (#/&) safely alongside raw letters and text tokens
+    match = re.match(r'^(Cis|Dis|Eis|Fis|Gis|Ais|His|cis|dis|eis|fis|gis|ais|his|Ces|Des|Es|Fes|Ges|As|Hes|ces|des|es|fes|ges|as|hes|[A-G][#&]?|H|h|B|b)(.*)$', chord_text.strip())
+
     if not match:
         return chord_text
 
-    root, accidental, extension = match.groups()
+    root, extension = match.groups()
 
-    if root == 'H':
-        if accidental == 'is':    # His -> B#
-            root = 'B'
-            accidental = '#'
-        elif accidental == 'es' or accidental == 's':  # Hes / Hs -> B&
-            root = 'B'
-            accidental = '&'
-        else:                     # H -> B
-            root = 'B'
-            accidental = ''
-    elif root == 'B':
-        if accidental == 'es' or accidental == 's':  # Bes -> B&&
-            root = 'B'
-            accidental = '&&'
-        else:                     # Standalone internet 'B' in Cz/Ger means B-flat
-            root = 'B'
-            accidental = '&'
-    else:
-        if accidental == 'is':
-            accidental = '#'
-        elif accidental == 'es' or accidental == 's':
-            accidental = '&'
-        else:
-            accidental = ''
+    # Strict Canonical Map targeting your 24 explicit root combinations
+    german_to_international = {
+        # Naturals & German H conversion
+        'C': 'C', 'D': 'D', 'E': 'E', 'F': 'F', 'G': 'G', 'A': 'A', 'H': 'B', 'h': 'B',
 
-    return f"{root}{accidental}{extension}"
+        # Sharps (Křížky -is and native # symbols mapped directly to safe output)
+        'C#': 'C#', 'D#': 'D#', 'F#': 'F#', 'G#': 'G#', 'A#': 'A#',
+        'Cis': 'C#', 'Dis': 'D#', 'Fis': 'F#', 'Gis': 'G#', 'Ais': 'A#',
+        'cis': 'C#', 'dis': 'D#', 'fis': 'F#', 'gis': 'G#', 'ais': 'A#',
+
+        # Flats (Béčka -es and native & or b variations mapped cleanly)
+        'D&': 'D&', 'E&': 'E&', 'G&': 'G&', 'A&': 'A&', 'B&': 'B&',
+        'Des': 'D&', 'Es': 'E&', 'Ges': 'G&', 'As': 'A&', 'Hes': 'B&',
+        'ces': 'C',  'des': 'D&', 'es': 'E&', 'ges': 'G&', 'as': 'A&', 'hes': 'B&',
+
+        # The German/Czech B-flat Anomaly
+        'B': 'B&', 'b': 'B&'
+    }
+
+    if root in german_to_international:
+        root = german_to_international[root]
+
+    return f"{root}{extension}"
 
 def parse_filename_metadata(filename):
     """
@@ -109,8 +108,7 @@ def clean_latex_dashes(line):
 
 def process_pure_chord_line(chord_line):
     """Helper to convert a standalone line of chords into standard LaTeX sequences."""
-    chord_regex = r'[A-G|H](?:es|is|[b#&])?(?:m|maj|min|dim|aug|sus)?\d*(?:\/[A-G|H](?:es|is|[b#&])?)?'
-    chord_matches = re.finditer(chord_regex, chord_line)
+    chord_matches = re.finditer(GERMAN_CHORD_REGEX, chord_line)
 
     combined_line = list(chord_line)
     for match in reversed(list(chord_matches)):
@@ -129,8 +127,7 @@ def merge_chords_and_lyrics(chord_line, lyric_line):
     Weaves chords into lyrics cleanly using a Right-to-Left loop.
     This guarantees that modifications downstream never offset early indices.
     """
-    chord_regex = r'[A-G|H](?:es|is|[b#&])?(?:m|maj|min|dim|aug|sus)?\d*(?:\/[A-G|H](?:es|is|[b#&])?)?'
-    chord_matches = list(re.finditer(chord_regex, chord_line))
+    chord_matches = list(re.finditer(GERMAN_CHORD_REGEX, chord_line))
     combined_lyric = list(lyric_line)
 
     # Process RIGHT-TO-LEFT so shifting lengths don't spoil our text boundaries
@@ -193,7 +190,6 @@ def convert_song_text(text):
                     merged = merge_chords_and_lyrics(line, next_line)
 
                     # Step 3: Now that chords are locked in place, strip prefixes and clean layout
-                    # Remove "1. ", "2. ", etc. or "R: ", "Ref:" from the merged line
                     cleaned_line = re.sub(r'^\s*(Ref|Chorus|R):\s*', '', merged, flags=re.IGNORECASE)
                     cleaned_line = re.sub(r'^\s*\d+\.\s*', '', cleaned_line)
 
@@ -231,6 +227,7 @@ def generate_latex_song(title, author, content):
 
     return f"""% chktex-file 8
 % chktex-file 12
+% chktex-file 18
 {meta_string}
 
 {content}
