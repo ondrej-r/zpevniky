@@ -67,21 +67,30 @@ def convert_german_chord(chord_text):
 def parse_filename_metadata(filename):
     """
     Extracts song title and author based on custom naming convention rules:
-    - 'Title-Author.txt' -> Title, Author
-    - 'Title.txt' -> Title, Empty Author string
+    - Matches 'Title-Author.txt' or 'Title.txt'
+    - Pattern '_-_' is treated as a literal ' - ' regardless of where it appears.
     """
     base_name = os.path.basename(filename).replace('.txt', '')
+    base_name = base_name.replace(' ', '')
 
-    if '-' in base_name:
-        parts = base_name.split('-', 1)
+    placeholder = "___LITERAL_DASH___"
+    protected_name = base_name.replace('_-_', placeholder)
+
+    if '-' in protected_name:
+        parts = protected_name.split('-', 1)
         raw_title = parts[0]
         raw_author = parts[1]
     else:
-        raw_title = base_name
+        raw_title = protected_name
         raw_author = ""
 
-    title = raw_title.replace('_', ' ').strip()
-    author = raw_author.replace('_', ' ').strip()
+    def finalize_string(s):
+        s = s.replace(placeholder, ' - ')
+        s = s.replace('_', ' ')
+        return s.strip()
+
+    title = finalize_string(raw_title)
+    author = finalize_string(raw_author)
 
     return title, author
 
@@ -104,7 +113,7 @@ def clean_latex_dashes(line):
 
     line = re.compile(r'(\w+)--(\w+)').sub(restore_compounds, line)
     line = re.sub(r'\s+', ' ', line)
-    return line # Maintain original layout structure for indexing lookup loops
+    return line
 
 def process_pure_chord_line(chord_line):
     """Helper to convert a standalone line of chords into standard LaTeX sequences."""
@@ -130,7 +139,6 @@ def merge_chords_and_lyrics(chord_line, lyric_line):
     chord_matches = list(re.finditer(GERMAN_CHORD_REGEX, chord_line))
     combined_lyric = list(lyric_line)
 
-    # Process RIGHT-TO-LEFT so shifting lengths don't spoil our text boundaries
     for match in reversed(chord_matches):
         raw_chord = match.group()
         start_idx = match.start()
@@ -149,14 +157,10 @@ def merge_chords_and_lyrics(chord_line, lyric_line):
 
 def convert_song_text(text):
     text = text.replace('\xa0', ' ')
+    text = text.replace('„', '"').replace('“', '"')
 
-    # Step 1: Keep ALL original spaces completely intact so chords match up
-    # perfectly with character positions! Only strip trailing newlines.
     raw_lines = [line.rstrip('\r\n') for line in text.splitlines()]
-
-    # Group raw text into layout paragraphs
-    blocks = []
-    current_block = []
+    blocks, current_block = [], []
     for line in raw_lines:
         if line.strip():
             current_block.append(line)
@@ -170,52 +174,47 @@ def convert_song_text(text):
     final_song_output = []
 
     for block in blocks:
-        # Detect if this block is a chorus based on a prefix anywhere inside it
         is_chorus_block = False
+        is_starred = False
+
         for line in block:
             if re.match(r'^\s*(Ref|Chorus|R):', line, re.IGNORECASE):
                 is_chorus_block = True
-                break
+            if re.match(r'^\s*\*:', line):
+                is_starred = True
 
         processed_block_lines = []
         idx = 0
         while idx < len(block):
             line = block[idx]
-
             if is_chord_line(line):
                 if idx + 1 < len(block) and not is_chord_line(block[idx + 1]):
-                    next_line = block[idx + 1]
-
-                    # Step 2: Merge chords directly into the RAW lyric line (Right-to-Left)
-                    merged = merge_chords_and_lyrics(line, next_line)
-
-                    # Step 3: Now that chords are locked in place, strip prefixes and clean layout
-                    cleaned_line = re.sub(r'^\s*(Ref|Chorus|R):\s*', '', merged, flags=re.IGNORECASE)
+                    merged = merge_chords_and_lyrics(line, block[idx + 1])
+                    cleaned_line = re.sub(r'^\s*(Ref|Chorus|R|\*):\s*', '', merged, flags=re.IGNORECASE)
                     cleaned_line = re.sub(r'^\s*\d+\.\s*', '', cleaned_line)
-
-                    # Apply official Czech ÚJČ dash guidelines
-                    sanitized_line = clean_latex_dashes(cleaned_line)
-
-                    # Strip all leading/trailing whitespace completely before final output
-                    processed_block_lines.append(sanitized_line.strip())
+                    processed_block_lines.append(clean_latex_dashes(cleaned_line).strip())
                     idx += 2
                 else:
-                    # Standalone chord line
-                    processed_line = clean_latex_dashes(process_pure_chord_line(line))
-                    processed_block_lines.append(processed_line.strip())
+                    processed_block_lines.append(clean_latex_dashes(process_pure_chord_line(line)).strip())
                     idx += 1
             else:
-                # Regular lyric line without any chords on top
-                cleaned_line = re.sub(r'^\s*(Ref|Chorus|R):\s*', '', line, flags=re.IGNORECASE)
+                cleaned_line = re.sub(r'^\s*(Ref|Chorus|R|\*):\s*', '', line, flags=re.IGNORECASE)
                 cleaned_line = re.sub(r'^\s*\d+\.\s*', '', cleaned_line)
-                sanitized_line = clean_latex_dashes(cleaned_line)
-                processed_block_lines.append(sanitized_line.strip())
+                processed_block_lines.append(clean_latex_dashes(cleaned_line).strip())
                 idx += 1
 
-        env_tag = "chorus" if is_chorus_block else "verse"
-        final_song_output.append(f"\\begin{env_tag}{{}}")
-        final_song_output.extend(processed_block_lines)
-        final_song_output.append(f"\\end{env_tag}{{}}\n")
+        final_lines = []
+        for l in processed_block_lines:
+            l = l.replace('/: ', '\\lrep{} ').replace('/:', '\\lrep{}')
+            l = l.replace(' :/', ' \\rrep{}').replace(':/', ' \\rrep{}')
+            l = l.replace('...', '\\ldots{}')
+            final_lines.append(l)
+
+        base_name = "chorus" if is_chorus_block else "verse"
+        start_tag = f"\\begin{base_name}*{{}}" if is_starred else f"\\begin{base_name}{{}}"
+        end_tag = f"\\end{base_name}{{}}"
+
+        final_song_output.append(f"{start_tag}\n" + "\n".join(final_lines) + f"\n{end_tag}\n")
 
     return "\n".join(final_song_output).strip()
 
@@ -239,46 +238,45 @@ if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.abspath(__file__))
     src_dir = os.path.join(script_dir, "txt")
     dst_dir = os.path.join(script_dir, "src")
-
     os.makedirs(dst_dir, exist_ok=True)
 
+    input_filenames = []
+    output_filenames = []
+
     if len(sys.argv) >= 2:
-        target_filename = sys.argv[1]
-        input_path = os.path.join(src_dir, target_filename)
-        files_to_process = [input_path] if os.path.exists(input_path) else []
-        if not files_to_process:
-            print(f"Error: Could not find '{target_filename}' inside folder: {src_dir}")
-            sys.exit(1)
+        files_to_process = [os.path.join(src_dir, sys.argv[1])]
     else:
-        if not os.path.exists(src_dir):
-            print(f"Error: The 'txt' folder does not exist relative to the script layout at: {src_dir}")
-            sys.exit(1)
         files_to_process = [os.path.join(src_dir, f) for f in os.listdir(src_dir) if f.endswith(".txt")]
 
-    if not files_to_process:
-        print(f"No source files detected inside: {src_dir}")
-        sys.exit(0)
+    input_filenames = [os.path.basename(f) for f in files_to_process if os.path.exists(f)]
 
     print(f"Processing tracks from {src_dir} into {dst_dir}...\n" + "-"*50)
 
     for file_path in files_to_process:
+        if not os.path.exists(file_path):
+            continue
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 raw_text = f.read()
 
             title, author = parse_filename_metadata(file_path)
-            converted_content = convert_song_text(raw_text)
-            latex_song = generate_latex_song(title, author, converted_content)
+            content = convert_song_text(raw_text)
+            latex_song = generate_latex_song(title, author, content)
 
-            base_name = os.path.basename(file_path).replace('.txt', '')
-            output_path = os.path.join(dst_dir, base_name + ".tex")
+            clean_base = os.path.basename(file_path).replace('.txt', '').replace(' ', '')
+            tex_filename = f"{clean_base}.tex"
 
-            with open(output_path, 'w', encoding='utf-8') as f:
+            with open(os.path.join(dst_dir, tex_filename), 'w', encoding='utf-8') as f:
                 f.write(latex_song)
 
+            output_filenames.append(tex_filename)
             author_log = author if author else "None"
-            print(f"✓ '{title}' [Author: {author_log}] -> src/{base_name}.tex")
+            print(f"✓ '{title}' [Author: {author_log}] -> src/{tex_filename}")
         except Exception as e:
             print(f"✗ Failed to convert {os.path.basename(file_path)}: {str(e)}")
 
-    print("-"*50 + f"\nDone! Batch compilation complete.")
+    print("-" * 50 + f"\nDone! Batch compilation complete.")
+
+    if output_filenames:
+        print("-" * 50)
+        print("\n".join(output_filenames))
