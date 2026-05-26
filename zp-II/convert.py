@@ -25,8 +25,8 @@ def is_chord_line(line):
 
 def convert_german_chord(chord_text):
     """
-    Translates German/Czech text notation definitions into standard international representations.
-    Maps everything directly to one of your environment's 24 supported structural roots.
+    Translates German/Czech notation into standard international representations.
+    Replaces accidentals with LaTeX-safe musical commands {\\shrp} and {\\flt}.
     """
     if '/' in chord_text:
         parts = chord_text.split('/')
@@ -40,23 +40,23 @@ def convert_german_chord(chord_text):
 
     root, extension = match.groups()
 
-    # Strict Canonical Map targeting your 24 explicit root combinations
+    # Canonical Map using {\shrp} and {\flt} instead of raw or escaped characters
     german_to_international = {
         # The German/Czech B-flat Anomaly
-        'B': 'B\\&', 'b': 'B\\&',
+        'B': 'B{\\flt}', 'b': 'B{\\flt}',
 
         # Naturals & German H conversion
         'C': 'C', 'D': 'D', 'E': 'E', 'F': 'F', 'G': 'G', 'A': 'A', 'H': 'B', 'h': 'B',
 
-        # Sharps (Křížky -is and native # symbols mapped directly to safe output)
-        'C#': 'C\\#', 'D#': 'D\\#', 'F#': 'F\\#', 'G#': 'G\\#', 'A#': 'A\\#',
-        'Cis': 'C\\#', 'Dis': 'D\\#', 'Fis': 'F\\#', 'Gis': 'G\\#', 'Ais': 'A\\#',
-        'cis': 'C\\#', 'dis': 'D\\#', 'fis': 'F\\#', 'gis': 'G\\#', 'ais': 'A\\#',
+        # Sharps (Křížky -is and native # symbols)
+        'C#': 'C{\\shrp}', 'D#': 'D{\\shrp}', 'F#': 'F{\\shrp}', 'G#': 'G{\\shrp}', 'A#': 'A{\\shrp}',
+        'Cis': 'C{\\shrp}', 'Dis': 'D{\\shrp}', 'Fis': 'F{\\shrp}', 'Gis': 'G{\\shrp}', 'Ais': 'A{\\shrp}',
+        'cis': 'C{\\shrp}', 'dis': 'D{\\shrp}', 'fis': 'F{\\shrp}', 'gis': 'G{\\shrp}', 'ais': 'A{\\shrp}',
 
-        # Flats (Béčka -es and native & or b variations mapped cleanly)
-        'D&': 'D&', 'E&': 'E&', 'G&': 'G&', 'A&': 'A&', 'B&': 'B&',
-        'Des': 'D&', 'Es': 'E&', 'Ges': 'G&', 'As': 'A&', 'Hes': 'B&',
-        'ces': 'C',  'des': 'D&', 'es': 'E&', 'ges': 'G&', 'as': 'A&', 'hes': 'B&',
+        # Flats (Béčka -es and native & symbols)
+        'D&': 'D{\\flt}', 'E&': 'E{\\flt}', 'G&': 'G{\\flt}', 'A&': 'A{\\flt}', 'B&': 'B{\\flt}',
+        'Des': 'D{\\flt}', 'Es': 'E{\\flt}', 'Ges': 'G{\\flt}', 'As': 'A{\\flt}', 'Hes': 'B{\\flt}',
+        'ces': 'C',  'des': 'D{\\flt}', 'es': 'E{\\flt}', 'ges': 'G{\\flt}', 'as': 'A{\\flt}', 'hes': 'B{\\flt}',
     }
 
     if root in german_to_international:
