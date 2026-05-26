@@ -18,25 +18,25 @@ R: Polykej whisky a zvířenej prach,
        D7          G7         C
    tam nemusíš se, už rudochů bát.
 
-Rec: "Georgi, už jsem celá roztřesená, zastav."
+*: Rec: "Georgi, už jsem celá roztřesená, zastav."
      "Zalez zpátky do vozu, ženo."
 
 2. Jen tři bytelný kola...
 R:
 
-Rec: "Tatínku, tatínku, já už mám plnej nočníček!"
+*: Rec: "Tatínku, tatínku, já už mám plnej nočníček!"
      "Proboha, synku, to není nočníček, to je soudek s prachem!"
 
 3. Jen dvě bytelný kola...
 R:
 
-Rec: "Synu, synu, vždyť jedeme jak s hnojem!"
+*: Rec: "Synu, synu, vždyť jedeme jak s hnojem!"
      "Jó, koho jsem si naložil, toho vezu!"
 
 4. Už jen jedinný kolo...
 R:
 
-Rec: "Georgi, když já se strašně bojím indiánů!"
+*: Rec: "Georgi, když já se strašně bojím indiánů!"
      "Zatáhni za sebou plachtu ženo a mlč!"
 
 5. Už ani jediný kolo nemá náš proklatej vůz...

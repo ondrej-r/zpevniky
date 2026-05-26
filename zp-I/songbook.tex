@@ -1,5 +1,3 @@
-% chktex-file 8
-% chktex-file 12
 \documentclass[10pt]{article}
 \usepackage[
     a5paper,
@@ -8,11 +6,12 @@
     left=2cm,
     right=2cm
 ]{geometry}
+\usepackage[bookmarks]{hyperref}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage{xpatch}
-\usepackage[chorded,noshading,nomeasures,noindexes]{songs}
-% \usepackage[chorded,transposecapos,noshading,nomeasures,noindexes]{songs}
+\usepackage[chorded,noshading,nomeasures]{songs}
+% \usepackage[chorded,transposecapos,noshading,nomeasures]{songs}
 
 \setlength{\parindent}{0pt}
 \setlength{\sbarheight}{0pt}
@@ -95,7 +94,6 @@
   {\SB@chorusbar\SB@box}{}
   {}{}
 
-  % Core file loop definition (Bypasses old distribution errors)
   \newcommand{\InputSongFolder}[1]{%
     \typeout{Scanning for songs inside #1\ldots}%
     \openin\@inputcheck=|'find #1 -name '*.tex' -type f | sort'%
@@ -116,7 +114,31 @@
 \makeatother
 % === Patch chorus formating ===
 
+% === Patch Table of Contents ===
+\makeatletter
+% 1. Copy the original \beginsong to a safe name
+\let\oldbeginsong\beginsong%
+
+% 2. Redefine \beginsong to intercept the Title (argument #1)
+\renewcommand\beginsong[1]{%
+  % Put the title into the Table of Contents safely *before* internal processing
+  \hypersetup{bookmarksdepth=0}%
+  \phantomsection%
+  \addcontentsline{toc}{subsection}{#1}%
+  \hypersetup{bookmarksdepth=2}%
+  %
+  % Pass control back to the original macro so it can parse authors, keys, etc.
+  \oldbeginsong{#1}%
+}
+\makeatother
+% === Patch Table of Contents ===
+
+\renewcommand{\contentsname}{Obash}
+
 \begin{document}
+
+\tableofcontents
+\clearpage
 
 \renewcommand{\lyricfont}{\small}
 \renewcommand{\printchord}{\it\small\/}
@@ -129,20 +151,18 @@
 
 \songcolumns{1}
 
+\repchoruses{}
+
 % convert from engish notation to german notation
 % \notenamesin{A}{B}{C}{D}{E}{F}{G}
 % \notenamesout{A}{H}{C}{D}{E}{F}{G}
 
 % \makeatletter
 % \def\SB@bchord#1{%
-%   % Check if the current note has a flat modifier AND the original note name was B
 %   \ifnum\SB@modifier=-\@ne\if\SB@basename{} B%
-%     % If both are true, force the output string to be just "B"
 %     \def\SB@outstring{B}%
-%     % Clear the modifier so it doesn't try to attach a math flat symbol later
 %     \SB@modifier=\z@%
 %   \fi\fi%
-%   % Pass the modified properties back to the original package font-printer
 %   \SB@chordfont\SB@outstring\futurelet\next\SB@echord%
 % }
 % \makeatother
@@ -222,7 +242,6 @@
 \addsong{Zlaté_střevíčky-Edita_Štaubertová.tex}
 
 \begin{songs}{}
-  \repchoruses{}
   \allsongs{}
 \end{songs}
 
