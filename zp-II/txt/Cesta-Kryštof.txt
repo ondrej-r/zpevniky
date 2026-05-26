@@ -1,4 +1,5 @@
-*: C, G, Ami, F, G
+   C G Ami F G
+*:
 
        C                              G
 1. Tou cestou, tím směrem prý bych se dávno měl dát,

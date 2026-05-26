@@ -7,7 +7,7 @@ import sys
 import os
 
 # Updated to securely catch roots containing raw # and & characters alongside original Czech names
-GERMAN_CHORD_REGEX = r'(?:Cis|Dis|Eis|Fis|Gis|Ais|His|cis|dis|eis|fis|gis|ais|his|Ces|Des|Es|Fes|Ges|As|Hes|ces|des|es|fes|ges|as|hes|[A-G|H|bB])[#&]?(?:maj|min|dim|aug|sus|mi|m|add|4sus)?\d*(?:\/(?:Cis|Dis|Eis|Fis|Gis|Ais|His|cis|dis|eis|fis|gis|ais|his|Ces|Des|Es|Fes|Ges|As|Hes|ces|des|es|fes|ges|as|hes|[A-G|H|bB])[#&]?(?:maj|min|dim|aug|sus|mi|m|add|4sus)?\d*)?'
+GERMAN_CHORD_REGEX = r'(?:Cis|Dis|Eis|Fis|Gis|Ais|His|cis|dis|eis|fis|gis|ais|his|Ces|Des|Es|Fes|Ges|As|Hes|ces|des|es|fes|ges|as|hes|[A-G|H|bB])[#&]?(?:maj|min|dim|aug|sus|mi|m|add|4sus|\+)?\d*(?:\/(?:Cis|Dis|Eis|Fis|Gis|Ais|His|cis|dis|eis|fis|gis|ais|his|Ces|Des|Es|Fes|Ges|As|Hes|ces|des|es|fes|ges|as|hes|[A-G|H|bB])[#&]?(?:maj|min|dim|aug|sus|mi|m|add|4sus|\+)?\d*)?'
 
 def is_chord_line(line):
     """
@@ -61,6 +61,9 @@ def convert_german_chord(chord_text):
 
     if root in german_to_international:
         root = german_to_international[root]
+
+    if '+' in extension:
+        extension = extension.replace('+', 'aug')
 
     return f"{root}{extension}"
 
@@ -211,6 +214,9 @@ def convert_song_text(text):
             l = l.replace('...', '\\ldots{}')
             final_lines.append(l)
 
+        if not final_lines or all(not line.strip() for line in final_lines):
+            final_lines = ["\\phantom{}"]
+
         base_name = "chorus" if is_chorus_block else "verse"
         start_tag = f"\\begin{base_name}*{{}}" if is_starred else f"\\begin{base_name}{{}}"
         end_tag = f"\\end{base_name}{{}}"
@@ -272,9 +278,9 @@ if __name__ == "__main__":
 
             output_filenames.append(tex_filename)
             author_log = author if author else "None"
-            print(f"✓ '{title}' [Author: {author_log}] -> src/{tex_filename}")
+            print(f"'{title}' [Author: {author_log}] -> src/{tex_filename}")
         except Exception as e:
-            print(f"✗ Failed to convert {os.path.basename(file_path)}: {str(e)}")
+            print(f"Failed to convert {os.path.basename(file_path)}: {str(e)}")
 
     print("-" * 50 + f"\nDone! Batch compilation complete.")
 

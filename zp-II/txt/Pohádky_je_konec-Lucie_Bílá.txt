@@ -1,35 +1,36 @@
 
-   C     F               C  F  C    F              C    F
+   C     Fmaj7           C  F  C    Fmaj7          C    F
 1. Stmívá se nad královstvím,  závist je smutek a stín,
-   C     F         C  F        C   F            C
+   C     Fmaj7     C  Fmaj7    C   Fmaj7        C
    závist   potutelná,         číhá  je nesmrtelná.
 
-    F              G              C        F
-R1: Tam, kde láska vládne, závist je ztracená,
-    F            G               Dm   G      C
-    schání srdce prázdné z lásky bývá - zmatená.
-    F  G   C     F  G  C   F  G  C    F  G C
-    Bimbam zvon  vyzvání   blíží se   svítání.
+   F              G              C        F
+R: Tam, kde láska vládne, závist je ztracená,
+   F            G               Dm   G      C
+   schání srdce prázdné z lásky bývá - zmatená.
+   F  G   C     F  G  C   F  G  C    F  G C
+   Bimbam zvon  vyzvání   blíží se   svítání.
 
-   C    F          C   F   C    F            C   F
+   C    Fmaj7      C   F   C    Fmaj7        C   F
 2. Svítá rozum šel spát, z lásky zblázním se rád,
-   C    F          C   F     C    F              C
+   C    Fmaj7      C   Fmaj7 C    Fmaj7          C
    svítá a já mám strach, že láska je jen v pohádkách.
 
-    F              G              C        F
-R2: Tam, kde láska vládne, závist je ztracená,
-    F            G               Dm   G      C
-    schání srdce prázdné z lásky bývá - zničená.
-    F  G   C     F  G C    F  G  C     F  G C
-    Bimbam zvon  vyzvání   láska nás   ochrání.
+   F              G              C        F
+R: Tam, kde láska vládne, závist je ztracená,
+   F            G               Dm   G      C
+   schání srdce prázdné z lásky bývá - zničená.
+   F  G   C     F  G C    F  G  C     F  G C
+   Bimbam zvon  vyzvání   láska nás   ochrání.
 
-Vyhr.:  C F C F     C F C F C
+   C Fmaj7 C Fmaj7 C Fmaj7 C Fmaj7 C
+*:
 
-    F              G              C        F
-R3: Tam, kde láska vládne, závist je ztracená
-    F            G                Dm    F   G
-    schání srdce prázdné z pravdy šílí, BIM BAM ...
-    F  G   C     F  G C    F  G  C     F  G C
-    Bimbam zvon  vyzvání   Láska nás   ochrání.
-    F  G  C     F  G  C      F  G  C     F  G C
-    Ná-ná-ná    ná-ná-ná     Láska nás   ochrání.
+   F              G              C        F
+R: Tam, kde láska vládne, závist je ztracená
+   F            G                Dm    G
+   schání srdce prázdné z pravdy šílí.
+   F  G   C     F  G C    F  G  C     F  G C
+   Bimbam zvon  vyzvání   Láska nás   ochrání.
+   F  G  C     F  G  C      F  G  C     F  G C
+   Ná-ná-ná    ná-ná-ná     Láska nás   ochrání.

@@ -16,7 +16,8 @@ R: Krá, až si kabát změní
              F              Emi
    přistanou v jiném století
 
-*: Em Dmi Ami Dmi Ami
+   Em Dmi Ami Dmi Ami
+*:
 
 2. Zamčený jsou stáje kat už hřívy stříhá
    lovčí král je v kapli po stý korunován
