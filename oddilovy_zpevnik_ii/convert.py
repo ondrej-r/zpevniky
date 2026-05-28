@@ -253,7 +253,8 @@ if __name__ == "__main__":
     if len(sys.argv) >= 2:
         files_to_process = [os.path.join(src_dir, sys.argv[1])]
     else:
-        files_to_process = [os.path.join(src_dir, f) for f in os.listdir(src_dir) if f.endswith(".txt")]
+        sorted_files = sorted(os.listdir(src_dir))
+        files_to_process = [os.path.join(src_dir, f) for f in sorted_files if f.endswith(".txt")]
 
     input_filenames = [os.path.basename(f) for f in files_to_process if os.path.exists(f)]
 

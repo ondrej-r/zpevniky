@@ -1,7 +1,8 @@
-   Emi	C	D
-1. Pojď sem, pojď sem slunce svítí Emi	C	D
+   Emi       C        D
+1. Pojď sem, pojď sem slunce svítí
+   Emi   C       D
    vánek květiny houpá,
-   Emi	C	D	E4
+   Emi       C         D            E4
    pojď sem, pojď sem, slunce svítí nám
 
 2. Tvou pleť, tvou pleť obarví Ti bronzem tak nebuď hloupá, pojď sem, pojď sem
@@ -15,7 +16,9 @@ R: To se ti zdá, že příliš silně pálí,
    chce si jen hrát, tak snad se na něj nezlobíš
 
 3. = 1.
+
 4. = 2.
+
 R:
 
    Emi

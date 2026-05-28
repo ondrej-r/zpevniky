@@ -24,7 +24,7 @@
          C     G          Ami
    nikdo z nás pro holku nebrečel.
 
-   F     C        Dmi        Ami  E          Ami
+   F     C        Dmi             E          Ami
 R: Duní kláda korytem, bacha dej, hej, bacha dej!
      F        C          Dmi      E
    S tou si, bráško, netykej, netykej !
@@ -42,7 +42,7 @@ R: Duní kláda korytem, bacha dej, hej, bacha dej!
          C     G          Ami
    jen kus práce nedodělaný.
 
-      F     C        Dmi        Ami  E          Ami
+      F     C        Dmi             E          Ami
 R: /: Duní kláda korytem, bacha dej, hej, bacha dej!
         F        C          Dmi      E  A
       S tou si, bráško, netykej, netykej ! :/
