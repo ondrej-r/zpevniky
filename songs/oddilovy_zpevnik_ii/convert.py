@@ -10,7 +10,7 @@ import os
 # Updated to securely catch roots containing raw # and & characters alongside original Czech names
 GERMAN_CHORD_REGEX = r'(?:Cis|Dis|Eis|Fis|Gis|Ais|His|cis|dis|eis|fis|gis|ais|his|Ces|Des|Es|Fes|Ges|As|Hes|ces|des|es|fes|ges|as|hes|[A-G|H|bB])[#&]?(?:maj|min|dim|aug|sus|mi|m|add|4sus|\+)?\d*(?:\/(?:Cis|Dis|Eis|Fis|Gis|Ais|His|cis|dis|eis|fis|gis|ais|his|Ces|Des|Es|Fes|Ges|As|Hes|ces|des|es|fes|ges|as|hes|[A-G|H|bB])[#&]?(?:maj|min|dim|aug|sus|mi|m|add|4sus|\+)?\d*)?'
 
-LOCALE_NAME = 'cs_CZ.UTF-8'
+LOCALE_NAME = 'C.UTF-8'
 
 try:
     locale.setlocale(locale.LC_COLLATE, LOCALE_NAME)
@@ -291,7 +291,6 @@ if __name__ == "__main__":
 
             output_filenames.append(tex_filename)
             author_log = author if author else "None"
-            print(f"'{title}' [Author: {author_log}] -> src/{tex_filename}")
         except Exception as e:
             print(f"Failed to convert {os.path.basename(file_path)}: {str(e)}")
 
