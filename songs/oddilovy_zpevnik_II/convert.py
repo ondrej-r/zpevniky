@@ -251,26 +251,35 @@ def generate_latex_song(title, author, content):
 """
 
 if __name__ == "__main__":
-    script_dir = os.path.dirname(os.path.abspath(__file__))
+    script_path = os.path.abspath(__file__)
+    script_dir = os.path.dirname(script_path)
+    songbook_id = os.path.basename(script_dir)
+
+    project_root = os.path.abspath(os.path.join(script_dir, "..", ".."))
+
     src_dir = os.path.join(script_dir, "txt")
     dst_dir = os.path.join(script_dir, "src")
-    os.makedirs(dst_dir, exist_ok=True)
+    build_dir = os.path.join(project_root, "build")
 
-    input_filenames = []
-    output_filenames = []
+    os.makedirs(dst_dir, exist_ok=True)
+    os.makedirs(build_dir, exist_ok=True)
 
     if len(sys.argv) >= 2:
         files_to_process = [os.path.join(src_dir, sys.argv[1])]
     else:
+        if not os.path.exists(src_dir):
+            print(f"ERROR: Source directory missing: {src_dir}")
+            sys.exit(1)
         sorted_files = sorted(
             [f for f in os.listdir(src_dir) if f.endswith(".txt")],
             key=locale.strxfrm
         )
-        files_to_process = [os.path.join(src_dir, f) for f in sorted_files if f.endswith(".txt")]
+        files_to_process = [os.path.join(src_dir, f) for f in sorted_files]
 
-    input_filenames = [os.path.basename(f) for f in files_to_process if os.path.exists(f)]
+    print(f"Processing tracks from {src_dir} into {dst_dir}...")
 
-    print(f"Processing tracks from {src_dir} into {dst_dir}...\n" + "-"*50)
+    output_filenames = []
+    manifest_entries = []
 
     for file_path in files_to_process:
         if not os.path.exists(file_path):
@@ -290,12 +299,25 @@ if __name__ == "__main__":
                 f.write(latex_song)
 
             output_filenames.append(tex_filename)
-            author_log = author if author else "None"
+
+            root_relative_path = f"songs/{songbook_id}/src/{tex_filename}"
+            manifest_entries.append(f"\\input{{{root_relative_path}}}")
+
         except Exception as e:
             print(f"Failed to convert {os.path.basename(file_path)}: {str(e)}")
 
-    print("-" * 50 + f"\nDone! Batch compilation complete.")
+    manifest_file_map = {
+        "nas_zpevnik": "nas_zpevnik_songs_list.tex",
+        "oddilovy_zpevnik_i": "oddilovy_zpevnik_I_songs_list.tex",
+        "oddilovy_zpevnik_ii": "oddilovy_zpevnik_II_songs_list.tex"
+    }
 
-    if output_filenames:
-        print("-" * 50)
-        print("\n".join(output_filenames))
+    manifest_name = manifest_file_map.get(songbook_id, f"{songbook_id}_songs_list.tex")
+    manifest_path = os.path.join(build_dir, manifest_name)
+
+    print(f"Writing master template tracklist: {manifest_path}")
+    with open(manifest_path, 'w', encoding='utf-8') as f:
+        f.write("% Generated automatically by convert.py inside build/\n")
+        f.write("\n".join(manifest_entries) + "\n")
+
+    print(f"Done! Batch compilation complete.")
