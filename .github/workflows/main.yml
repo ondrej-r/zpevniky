@@ -10,6 +10,9 @@ jobs:
   build-and-release:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
@@ -36,7 +39,7 @@ jobs:
       run: |
         echo "version=v$(date +'%Y.%m.%d')-${{ github.run_number }}" >> $GITHUB_OUTPUT
 
-    - name: Create GitHub Release and Upload PDFs
+    - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ steps.tag.outputs.version }}
