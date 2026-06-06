@@ -33,4 +33,3 @@ R: Měsíc,   svítí měsíc.
    Měsíc,   svítí měsíc.
    Em
    Měsíc...
-

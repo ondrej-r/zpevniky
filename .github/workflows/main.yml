@@ -31,9 +31,6 @@ jobs:
         make clean
         make
 
-    # =========================================================================
-    # PRODUCTION RELEASE STEPS (Commented out for local/self-hosted testing)
-    # =========================================================================
     - name: Generate Unique Version Tag
       id: tag
       run: |

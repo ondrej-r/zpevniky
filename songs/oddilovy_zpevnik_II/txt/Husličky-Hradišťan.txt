@@ -30,4 +30,3 @@
 
    Hmi F#mi C#mi D E A
 *:
-
