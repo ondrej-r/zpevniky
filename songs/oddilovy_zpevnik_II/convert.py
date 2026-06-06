@@ -301,7 +301,7 @@ if __name__ == "__main__":
             output_filenames.append(tex_filename)
 
             root_relative_path = f"songs/{songbook_id}/src/{tex_filename}"
-            manifest_entries.append(f"\\input{{{root_relative_path}}}")
+            manifest_entries.append(f"\\input{{{root_relative_path}}}\\sclearpage{{}}")
 
         except Exception as e:
             print(f"Failed to convert {os.path.basename(file_path)}: {str(e)}")

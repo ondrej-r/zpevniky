@@ -80,3 +80,4 @@ clean:
 	@echo "=== Wiping Build and Distribution Folders ==="
 	rm -rf $(OUTDIR)
 	rm -rf $(DISTDIR)
+	rm -rf artifacts
