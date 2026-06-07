@@ -17,7 +17,7 @@ locale_configured = False
 for loc in locale_options:
     try:
         locale.setlocale(locale.LC_COLLATE, loc)
-        LOCALE_NAME = loc
+        locale_name = loc
         locale_configured = True
         break
     except locale.Error:
