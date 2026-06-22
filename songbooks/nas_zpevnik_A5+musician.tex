@@ -13,11 +13,18 @@
 \usepackage[chorded,noshading,nomeasures]{songs}
 % \usepackage[chorded,transposecapos,noshading,nomeasures]{songs}
 
+% =================================================================
+% TOGGLE SWITCH: Set to 1 to hide subsequent choruses, 0 to show all
+\newcommand{\HideSubsequentChoruses}{0}
+% =================================================================
+
 \setlength{\parindent}{0pt}
 \setlength{\sbarheight}{0pt}
 \nosongnumbers{}
 
 \makeatletter
+
+\newcounter{choruscount}
 
 % === Patch chorus formating ===
 \xpatchcmd{\justifyleft}
@@ -56,6 +63,16 @@
   {\vnumberedfalse}{\vnumberedtrue}
   {}{}
 
+\xpretocmd{\beginchorus}{\stepcounter{choruscount}}{}{}
+
+\xpretocmd{\endchorus}{%
+  \ifnum\HideSubsequentChoruses=1\relax%
+    \ifnum\value{choruscount}>1\relax%
+      \endgroup\egroup%
+    \fi%
+  \fi%
+}{}{}
+
 \xpatchcmd{\SB@@beginchorus}
   {
     \setbox\SB@box\vbox\bgroup\begingroup%
@@ -71,14 +88,34 @@
     \setbox\SB@box\vbox\bgroup\begingroup
       \ifvnumbered%
         \def\SB@everypar{%
-          \setbox\SB@box\hbox{R:}%
-           \ifdim\wd\SB@box<\versenumwidth%
-             \setbox\SB@box\hbox%
-             to\versenumwidth{\unhbox\SB@box\hfil}%
-           \fi
-          \ifchorded\vrule\@height\baselineskip\@width\z@\@depth\z@\fi
-          \placeversenum\SB@box%
-          \gdef\SB@everypar{}%
+          \ifnum\HideSubsequentChoruses=1\relax%
+            \ifnum\value{choruscount}>1\relax%
+              \chordedfalse%
+              \leavevmode\hbox%
+              to \versenumwidth{R:\hfil}%
+              \gdef\SB@everypar{}%
+              \setbox\z@\vbox\bgroup\begingroup%
+              \chordedtrue%
+            \else%
+              \setbox\SB@box\hbox{R:}%
+              \ifdim\wd\SB@box<\versenumwidth%
+                \setbox\SB@box\hbox%
+                to\versenumwidth{\unhbox\SB@box\hfil}%
+              \fi%
+              \ifchorded\vrule\@height\baselineskip\@width\z@\@depth\z@\fi%
+              \placeversenum\SB@box%
+              \gdef\SB@everypar{}%
+            \fi%
+          \else%
+            \setbox\SB@box\hbox{R:}%
+            \ifdim\wd\SB@box<\versenumwidth%
+              \setbox\SB@box\hbox%
+              to\versenumwidth{\unhbox\SB@box\hfil}%
+            \fi%
+            \ifchorded\vrule\@height\baselineskip\@width\z@\@depth\z@\fi%
+            \placeversenum\SB@box%
+            \gdef\SB@everypar{}%
+          \fi%
         }
       \else
         \def\SB@everypar{
@@ -86,7 +123,7 @@
           \gdef\SB@everypar{}
         }
       \fi
-      \everypar{\SB@everypar\everypar{}}
+    \everypar{\SB@everypar\everypar{}}
   }
   {}{}
 
@@ -94,40 +131,36 @@
   {\SB@chorusbar\SB@box}{}
   {}{}
 
-  \newcommand{\InputSongFolder}[1]{%
-    \typeout{Scanning for songs inside #1\ldots}%
-    \openin\@inputcheck=|'find #1 -name '*.tex' -type f | sort'%
-    \loop%
-      \read\@inputcheck%
-      to \@songpath%
-      \unless\ifeof\@inputcheck%
-        \filename@parse{\@songpath}%
-        \edef\cleanpath{\filename@area\filename@base.\filename@ext}%
-        \expandafter\input\expandafter{\cleanpath}%
-      \repeat%
-    \closein\@inputcheck%
-  }
+\newcommand{\InputSongFolder}[1]{%
+  \typeout{Scanning for songs inside #1\ldots}%
+  \openin\@inputcheck=|'find #1 -name '*.tex' -type f | sort'%
+  \loop%
+    \read\@inputcheck%
+    to \@songpath%
+    \unless\ifeof\@inputcheck%
+      \filename@parse{\@songpath}%
+      \edef\cleanpath{\filename@area\filename@base.\filename@ext}%
+      \expandafter\input\expandafter{\cleanpath}%
+    \repeat%
+  \closein\@inputcheck%
+}
 
-  \newcommand{\allsongs}{}
-  \def\addsong#1{\g@addto@macro\allsongs{\input{src/#1}\sclearpage}}
+\newcommand{\allsongs}{}
+\def\addsong#1{\g@addto@macro\allsongs{\input{src/#1}\sclearpage}}
 
 \makeatother
 % === Patch chorus formating ===
 
 % === Patch Table of Contents ===
 \makeatletter
-% 1. Copy the original \beginsong to a safe name
 \let\oldbeginsong\beginsong%
 
-% 2. Redefine \beginsong to intercept the Title (argument #1)
 \renewcommand\beginsong[1]{%
-  % Put the title into the Table of Contents safely *before* internal processing
+  \setcounter{choruscount}{0}%
   \hypersetup{bookmarksdepth=0}%
   \phantomsection%
   \addcontentsline{toc}{subsection}{#1}%
   \hypersetup{bookmarksdepth=2}%
-  %
-  % Pass control back to the original macro so it can parse authors, keys, etc.
   \oldbeginsong{#1}%
 }
 \makeatother
@@ -151,8 +184,6 @@
 
 \songcolumns{1}
 
-\repchoruses{}
-
 % convert from engish notation to german notation
 % \notenamesin{A}{B}{C}{D}{E}{F}{G}
 % \notenamesout{A}{H}{C}{D}{E}{F}{G}
@@ -173,7 +204,7 @@
 
 \begin{songs}{}
   \allsongs{
-      \input{build/nas_zpevnik_musician_songs_list.tex}
+    \input{build/nas_zpevnik_musician_songs_list.tex}
   }
 \end{songs}
 
