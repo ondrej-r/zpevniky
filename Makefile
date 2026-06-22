@@ -6,21 +6,16 @@ PYTHON := python3
 OUTDIR := build
 DISTDIR := dist
 
-PDFS := \
-    $(OUTDIR)/nas_zpevnik_A4.pdf \
-    $(OUTDIR)/nas_zpevnik_A5.pdf \
-    $(OUTDIR)/oddilovy_zpevnik_I_A4.pdf \
-    $(OUTDIR)/oddilovy_zpevnik_I_A5.pdf \
-    $(OUTDIR)/oddilovy_zpevnik_II_A4.pdf \
-    $(OUTDIR)/oddilovy_zpevnik_II_A5.pdf
+# List of all songbooks to process
+SONGBOOKS := nas_zpevnik oddilovy_zpevnik_I oddilovy_zpevnik_II
 
-FINAL_PDF_NAMES := \
-    nas_zpevnik_A4.pdf \
-    nas_zpevnik_A5.pdf \
-    oddilovy_zpevnik_I_A4.pdf \
-    oddilovy_zpevnik_I_A5.pdf \
-    oddilovy_zpevnik_II_A4.pdf \
-    oddilovy_zpevnik_II_A5.pdf
+# Reconstruct targets to look exactly like your preferred output names: build/SONGBOOK_FORMAT+VARIANT.pdf
+PDFS := $(foreach sb,$(SONGBOOKS),\
+          $(foreach fmt,A4 A5,\
+            $(foreach var,singer musician,$(OUTDIR)/$(sb)_$(fmt)+$(var).pdf)))
+
+# Extract only the file names for delivery verification
+FINAL_PDF_NAMES := $(notdir $(PDFS))
 
 .PHONY: all clean prepare compile deliver
 
@@ -31,25 +26,36 @@ all: prepare
 prepare:
 	@mkdir -p $(OUTDIR)
 	@echo "=== Running convert.py scripts ==="
-	$(PYTHON) songs/nas_zpevnik/convert.py
-	$(PYTHON) songs/oddilovy_zpevnik_I/convert.py
-	$(PYTHON) songs/oddilovy_zpevnik_II/convert.py
+	@# 1. Process Musician Editions explicitly
+	$(PYTHON) songs/nas_zpevnik/convert.py -m
+	$(PYTHON) songs/oddilovy_zpevnik_I/convert.py -m
+	$(PYTHON) songs/oddilovy_zpevnik_II/convert.py -m
+	@# 2. Process Singer Editions explicitly
+	$(PYTHON) songs/nas_zpevnik/convert.py -s
+	$(PYTHON) songs/oddilovy_zpevnik_I/convert.py -s
+	$(PYTHON) songs/oddilovy_zpevnik_II/convert.py -s
 
 compile: $(PDFS)
 	@echo "=== PDF Compilation Phase Complete ==="
 
-$(OUTDIR)/nas_zpevnik_%.pdf: songbooks/nas_zpevnik_%.tex $(OUTDIR)/nas_zpevnik_songs_list.tex
-	@echo "=== Compiling $< ==="
+# Pattern rules matched precisely to their decoupled variant manifests
+$(OUTDIR)/%_A4+singer.pdf: songbooks/%_A4+singer.tex $(OUTDIR)/%_singer_songs_list.tex
+	@echo "=== Compiling $< (Singer A4) ==="
 	pdflatex -interaction=nonstopmode -output-directory=$(OUTDIR) $<
 	pdflatex -interaction=nonstopmode -output-directory=$(OUTDIR) $<
 
-$(OUTDIR)/oddilovy_zpevnik_I_%.pdf: songbooks/oddilovy_zpevnik_I_%.tex $(OUTDIR)/oddilovy_zpevnik_I_songs_list.tex
-	@echo "=== Compiling $< ==="
+$(OUTDIR)/%_A5+singer.pdf: songbooks/%_A5+singer.tex $(OUTDIR)/%_singer_songs_list.tex
+	@echo "=== Compiling $< (Singer A5) ==="
 	pdflatex -interaction=nonstopmode -output-directory=$(OUTDIR) $<
 	pdflatex -interaction=nonstopmode -output-directory=$(OUTDIR) $<
 
-$(OUTDIR)/oddilovy_zpevnik_II_%.pdf: songbooks/oddilovy_zpevnik_II_%.tex $(OUTDIR)/oddilovy_zpevnik_II_songs_list.tex
-	@echo "=== Compiling $< ==="
+$(OUTDIR)/%_A4+musician.pdf: songbooks/%_A4+musician.tex $(OUTDIR)/%_musician_songs_list.tex
+	@echo "=== Compiling $< (Musician A4) ==="
+	pdflatex -interaction=nonstopmode -output-directory=$(OUTDIR) $<
+	pdflatex -interaction=nonstopmode -output-directory=$(OUTDIR) $<
+
+$(OUTDIR)/%_A5+musician.pdf: songbooks/%_A5+musician.tex $(OUTDIR)/%_musician_songs_list.tex
+	@echo "=== Compiling $< (Musician A5) ==="
 	pdflatex -interaction=nonstopmode -output-directory=$(OUTDIR) $<
 	pdflatex -interaction=nonstopmode -output-directory=$(OUTDIR) $<
 
@@ -80,4 +86,5 @@ clean:
 	@echo "=== Wiping Build and Distribution Folders ==="
 	rm -rf $(OUTDIR)
 	rm -rf $(DISTDIR)
+	rm -rf songs/*/src/*
 	rm -rf artifacts

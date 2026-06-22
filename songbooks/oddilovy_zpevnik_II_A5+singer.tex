@@ -1,0 +1,180 @@
+\documentclass[10pt]{article}
+\usepackage[
+  a5paper,
+  top=2cm,
+  bottom=2cm,
+  left=2cm,
+  right=2cm
+]{geometry}
+\usepackage[bookmarks]{hyperref}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{xpatch}
+\usepackage[chorded,noshading,nomeasures]{songs}
+% \usepackage[chorded,transposecapos,noshading,nomeasures]{songs}
+
+\setlength{\parindent}{0pt}
+\setlength{\sbarheight}{0pt}
+\nosongnumbers{}
+
+\makeatletter
+
+% === Patch chorus formating ===
+\xpatchcmd{\justifyleft}
+  {\SB@cbarshift}
+  {\ifSB@inchorus\advance\leftskip\versenumwidth\fi}
+  {}{}
+
+\xpatchcmd{\justifycenter}
+  {\SB@cbarshift}{}
+  {}{}
+
+\xpatchcmd{\SB@par}
+  {\ifdim\cbarwidth>\z@\nobreak\else\SB@ilpenalty\fi}{}
+  {}{}
+
+\xpatchcmd{\brk}
+  {
+    \ifdim\cbarwidth=\z@%
+    \ifrepchorus\marks\SB@cmarkclass{}\fi%
+    \SB@breakpoint\brkpenalty%
+  }
+  {
+    \endgroup\egroup%
+    \ifrepchorus\ifSB@gotchorus\else
+      \global\setbox\SB@chorusbox\vbox{
+        \unvbox\SB@chorusbox%
+        \SB@chorusbar\SB@box%
+        \unvcopy\SB@box%
+        \SB@breakpoint\brkpenalty%
+      }%
+    \fi
+  }
+  {}{}
+
+\xpatchcmd{\beginchorus}
+  {\vnumberedfalse}{\vnumberedtrue}
+  {}{}
+
+\xpatchcmd{\SB@@beginchorus}
+  {
+    \setbox\SB@box\vbox\bgroup\begingroup%
+      \ifchorded%
+        \def\SB@everypar{%
+          \vrule\@height\baselineskip\@width\z@\@depth\z@%
+          \gdef\SB@everypar{}%
+        }%
+        \everypar{\SB@everypar\everypar{}}%
+      \fi%
+  }
+  {
+    \setbox\SB@box\vbox\bgroup\begingroup
+      \ifvnumbered%
+        \def\SB@everypar{%
+          \setbox\SB@box\hbox{R:}%
+           \ifdim\wd\SB@box<\versenumwidth%
+             \setbox\SB@box\hbox%
+             to\versenumwidth{\unhbox\SB@box\hfil}%
+           \fi
+          \ifchorded\vrule\@height\baselineskip\@width\z@\@depth\z@\fi
+          \placeversenum\SB@box%
+          \gdef\SB@everypar{}%
+        }
+      \else
+        \def\SB@everypar{
+          \ifchorded\vrule\@height\baselineskip\@width\z@\@depth\z@\fi
+          \gdef\SB@everypar{}
+        }
+      \fi
+      \everypar{\SB@everypar\everypar{}}
+  }
+  {}{}
+
+\xpatchcmd{\SB@endchorus}
+  {\SB@chorusbar\SB@box}{}
+  {}{}
+
+  \newcommand{\InputSongFolder}[1]{%
+    \typeout{Scanning for songs inside #1\ldots}%
+    \openin\@inputcheck=|'find #1 -name '*.tex' -type f | sort'%
+    \loop%
+      \read\@inputcheck%
+      to \@songpath%
+      \unless\ifeof\@inputcheck%
+        \filename@parse{\@songpath}%
+        \edef\cleanpath{\filename@area\filename@base.\filename@ext}%
+        \expandafter\input\expandafter{\cleanpath}%
+      \repeat%
+    \closein\@inputcheck%
+  }
+
+  \newcommand{\allsongs}{}
+  \def\addsong#1{\g@addto@macro\allsongs{\input{src/#1}\sclearpage}}
+
+\makeatother
+% === Patch chorus formating ===
+
+% === Patch Table of Contents ===
+\makeatletter
+% 1. Copy the original \beginsong to a safe name
+\let\oldbeginsong\beginsong%
+
+% 2. Redefine \beginsong to intercept the Title (argument #1)
+\renewcommand\beginsong[1]{%
+  % Put the title into the Table of Contents safely *before* internal processing
+  \hypersetup{bookmarksdepth=0}%
+  \phantomsection%
+  \addcontentsline{toc}{subsection}{#1}%
+  \hypersetup{bookmarksdepth=2}%
+  %
+  % Pass control back to the original macro so it can parse authors, keys, etc.
+  \oldbeginsong{#1}%
+}
+\makeatother
+% === Patch Table of Contents ===
+
+\renewcommand{\contentsname}{Obash}
+
+\begin{document}
+
+\tableofcontents
+\clearpage
+
+\renewcommand{\lyricfont}{\small}
+\renewcommand{\printchord}{\it\small\/}
+
+\renewcommand{\capo}[1]{ % fix capo spacing
+  \ifchorded{}
+    \vspace{-1.5ex}\musicnote{Capo #1}\vspace{-5.5ex}
+  \fi
+}
+
+\songcolumns{1}
+
+\norepchoruses{}
+
+% convert from engish notation to german notation
+% \notenamesin{A}{B}{C}{D}{E}{F}{G}
+% \notenamesout{A}{H}{C}{D}{E}{F}{G}
+
+% \makeatletter
+% \def\SB@bchord#1{%
+%   \ifnum\SB@modifier=-\@ne\if\SB@basename{} B%
+%     \def\SB@outstring{B}%
+%     \SB@modifier=\z@%
+%   \fi\fi%
+%   \SB@chordfont\SB@outstring\futurelet\next\SB@echord%
+% }
+% \makeatother
+
+% \renewcommand{\sharpsymbol}{is}
+% \renewcommand{\flatsymbol}{es}
+% ====================================================================
+
+\begin{songs}{}
+  \allsongs{
+      \input{build/oddilovy_zpevnik_II_singer_songs_list.tex}
+  }
+\end{songs}
+
+\end{document}

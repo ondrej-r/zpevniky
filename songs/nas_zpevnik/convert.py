@@ -177,7 +177,7 @@ def merge_chords_and_lyrics(chord_line, lyric_line):
 
     return "".join(combined_lyric)
 
-def convert_song_text(text):
+def convert_song_text(text, singers_edition=False):
     text = text.replace('\xa0', ' ')
     text = text.replace('„', '"').replace('“', '"')
 
@@ -194,6 +194,10 @@ def convert_song_text(text):
         blocks.append(current_block)
 
     final_song_output = []
+
+    # Decoupled independent tracking indices
+    verse_count = 0
+    chorus_count = 0
 
     for block in blocks:
         is_chorus_block = False
@@ -235,11 +239,28 @@ def convert_song_text(text):
         if not final_lines or all(not line.strip() for line in final_lines):
             final_lines = ["\\phantom{}"]
 
-        base_name = "chorus" if is_chorus_block else "verse"
-        start_tag = f"\\begin{base_name}*{{}}" if is_starred else f"\\begin{base_name}{{}}"
-        end_tag = f"\\end{base_name}{{}}"
+        # Parse environment block configuration dynamically
+        if is_chorus_block:
+            start_tag = "\\beginchorus{}"
+            end_tag = "\\endchorus{}"
+        else:
+            start_tag = "\\beginverse*{}" if is_starred else "\\beginverse{}"
+            end_tag = "\\endverse{}"
 
-        final_song_output.append(f"{start_tag}\n" + "\n".join(final_lines) + f"\n{end_tag}\n")
+        block_content = "\n".join(final_lines)
+
+        # Inject structural block layout overrides
+        if singers_edition and not is_starred:
+            if is_chorus_block:
+                chorus_count += 1
+                if chorus_count > 1:
+                    block_content = f"\\chordsoff{{}}\n{block_content}\n\\chordson{{}}"
+            else:
+                verse_count += 1
+                if verse_count > 1:
+                    block_content = f"\\chordsoff{{}}\n{block_content}\n\\chordson{{}}"
+
+        final_song_output.append(f"{start_tag}\n{block_content}\n{end_tag}\n")
 
     return "\n".join(final_song_output).strip()
 
@@ -253,6 +274,8 @@ def generate_latex_song(title, author, content):
 % chktex-file 12
 % chktex-file 18
 {meta_string}
+% \\capo{{0}}
+\\transpose{{0}}
 
 {content}
 
@@ -273,8 +296,34 @@ if __name__ == "__main__":
     os.makedirs(dst_dir, exist_ok=True)
     os.makedirs(build_dir, exist_ok=True)
 
-    if len(sys.argv) >= 2:
-        files_to_process = [os.path.join(src_dir, sys.argv[1])]
+    args = sys.argv[1:]
+    singer_flag = False
+    musician_flag = False
+    target_file = None
+
+    while args:
+        arg = args.pop(0)
+        match arg:
+            case "-s" | "--singer":
+                singer_flag = True
+            case "-m" | "--musician":
+                musician_flag = True
+            case _:
+                # Anything that doesn't match a flag is treated as the target file
+                target_file = arg
+
+    # Enforce mutual exclusivity
+    if singer_flag and musician_flag:
+        print("ERROR: Flags '-s/--singer' and '-m/--musician' are mutually exclusive. Choose only one profile.")
+        sys.exit(1)
+
+    # Resolve layout states based on valid flag states
+    SINGER_ONLY = singer_flag
+    MUSICIAN_ONLY = musician_flag
+
+    # Determine files to process based on parsed arguments
+    if target_file:
+        files_to_process = [os.path.join(src_dir, target_file)]
     else:
         if not os.path.exists(src_dir):
             print(f"ERROR: Source directory missing: {src_dir}")
@@ -286,47 +335,76 @@ if __name__ == "__main__":
         files_to_process = [os.path.join(src_dir, f) for f in sorted_files]
 
     print(f"Processing tracks from {src_dir} into {dst_dir}...")
+    if SINGER_ONLY:
+        print("Profile active: Singers Edition Layout only.")
+    elif MUSICIAN_ONLY:
+        print("Profile active: Musicians Edition Layout only.")
 
-    output_filenames = []
-    manifest_entries = []
+    musician_manifest_entries = []
+    singer_manifest_entries = []
 
     for file_path in files_to_process:
         if not os.path.exists(file_path):
+            print(f"Warning: File not found {file_path}")
             continue
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 raw_text = f.read()
 
             title, author = parse_filename_metadata(file_path)
-            content = convert_song_text(raw_text)
-            latex_song = generate_latex_song(title, author, content)
-
             clean_base = os.path.basename(file_path).replace('.txt', '').replace(' ', '')
-            tex_filename = f"{clean_base}.tex"
 
-            with open(os.path.join(dst_dir, tex_filename), 'w', encoding='utf-8') as f:
-                f.write(latex_song)
+            # --- 1. Process Musician Layout (*+musician.tex) ---
+            if not SINGER_ONLY:
+                musician_content = convert_song_text(raw_text, singers_edition=False)
+                musician_latex = generate_latex_song(title, author, musician_content)
+                musician_tex_filename = f"{clean_base}+musician.tex"
 
-            output_filenames.append(tex_filename)
+                with open(os.path.join(dst_dir, musician_tex_filename), 'w', encoding='utf-8') as f:
+                    f.write(musician_latex)
 
-            root_relative_path = f"songs/{songbook_id}/src/{tex_filename}"
-            manifest_entries.append(f"\\input{{{root_relative_path}}}\\sclearpage{{}}")
+                musician_rel_path = f"songs/{songbook_id}/src/{musician_tex_filename}"
+                musician_manifest_entries.append(f"\\input{{{musician_rel_path}}}\\sclearpage{{}}")
+
+            # --- 2. Process Singer Layout (*+singer.tex) ---
+            if not MUSICIAN_ONLY:
+                singer_content = convert_song_text(raw_text, singers_edition=True)
+                singer_latex = generate_latex_song(title, author, singer_content)
+                singer_tex_filename = f"{clean_base}+singer.tex"
+
+                with open(os.path.join(dst_dir, singer_tex_filename), 'w', encoding='utf-8') as f:
+                    f.write(singer_latex)
+
+                singer_rel_path = f"songs/{songbook_id}/src/{singer_tex_filename}"
+                singer_manifest_entries.append(f"\\input{{{singer_rel_path}}}\\sclearpage{{}}")
 
         except Exception as e:
             print(f"Failed to convert {os.path.basename(file_path)}: {str(e)}")
 
+    # Distinct mappings for separate musician and singer lists
     manifest_file_map = {
-        "nas_zpevnik": "nas_zpevnik_songs_list.tex",
-        "oddilovy_zpevnik_i": "oddilovy_zpevnik_I_songs_list.tex",
-        "oddilovy_zpevnik_ii": "oddilovy_zpevnik_II_songs_list.tex"
+        "nas_zpevnik": ("nas_zpevnik_musician_songs_list.tex", "nas_zpevnik_singer_songs_list.tex"),
+        "oddilovy_zpevnik_i": ("oddilovy_zpevnik_I_musician_songs_list.tex", "oddilovy_zpevnik_I_singer_songs_list.tex"),
+        "oddilovy_zpevnik_ii": ("oddilovy_zpevnik_II_musician_songs_list.tex", "oddilovy_zpevnik_II_singer_songs_list.tex")
     }
 
-    manifest_name = manifest_file_map.get(songbook_id, f"{songbook_id}_songs_list.tex")
-    manifest_path = os.path.join(build_dir, manifest_name)
+    m_name, s_name = manifest_file_map.get(
+        songbook_id,
+        (f"{songbook_id}_musician_songs_list.tex", f"{songbook_id}_singer_songs_list.tex")
+    )
 
-    print(f"Writing master template tracklist: {manifest_path}")
-    with open(manifest_path, 'w', encoding='utf-8') as f:
-        f.write("% Generated automatically by convert.py inside build/\n")
-        f.write("\n".join(manifest_entries) + "\n")
+    if not SINGER_ONLY:
+        m_path = os.path.join(build_dir, m_name)
+        print(f"Writing Musicians tracklist blueprint: {m_path}")
+        with open(m_path, 'w', encoding='utf-8') as f:
+            f.write("% Generated automatically by convert.py (Musicians Layout Profile)\n")
+            f.write("\n".join(musician_manifest_entries) + "\n")
 
-    print(f"Done! Batch compilation complete.")
+    if not MUSICIAN_ONLY:
+        s_path = os.path.join(build_dir, s_name)
+        print(f"Writing Singers tracklist blueprint: {s_path}")
+        with open(s_path, 'w', encoding='utf-8') as f:
+            f.write("% Generated automatically by convert.py (Singers Layout Profile)\n")
+            f.write("\n".join(singer_manifest_entries) + "\n")
+
+    print(f"Done! Clean tracklist architecture written.")
