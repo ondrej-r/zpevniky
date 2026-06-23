@@ -291,7 +291,7 @@ if __name__ == "__main__":
 
     src_dir = os.path.join(script_dir, "txt")
     dst_dir = os.path.join(script_dir, "src")
-    build_dir = os.path.join(project_root, "build")
+    build_dir = os.path.join(project_root, "songslists")
 
     os.makedirs(dst_dir, exist_ok=True)
     os.makedirs(build_dir, exist_ok=True)

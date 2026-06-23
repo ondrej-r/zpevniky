@@ -5,6 +5,8 @@ export LC_ALL := C.UTF-8
 PYTHON := python3
 OUTDIR := build
 DISTDIR := dist
+BOOKDIR := book
+LISTDIR := songslists
 
 # List of all songbooks to process
 SONGBOOKS := nas_zpevnik oddilovy_zpevnik_I oddilovy_zpevnik_II
@@ -17,14 +19,31 @@ PDFS := $(foreach sb,$(SONGBOOKS),\
 # Extract only the file names for delivery verification
 FINAL_PDF_NAMES := $(notdir $(PDFS))
 
-.PHONY: all clean prepare compile deliver
+.PHONY: everything all clean prepare songs compile deliver booklets
 
-all: prepare
+# Run the code three times in a row to fix table of contents numbering, then generate brochures
+everything:
+	@$(MAKE) clean
+	@$(MAKE) all
+	@$(MAKE) all
+	@$(MAKE) all
+	@$(MAKE) booklets
+
+all:
+	@$(MAKE) prepare
 	@$(MAKE) compile
 	@$(MAKE) deliver
 
 prepare:
 	@mkdir -p $(OUTDIR)
+	@mkdir -p $(LISTDIR)
+
+txttotex:
+	rm -rf songs/*/src/*
+	rm -rf $(LISTDIR)
+	@$(MAKE) songs
+
+songs:
 	@echo "=== Running convert.py scripts ==="
 	@# 1. Process Musician Editions explicitly
 	$(PYTHON) songs/nas_zpevnik/convert.py -m
@@ -38,23 +57,22 @@ prepare:
 compile: $(PDFS)
 	@echo "=== PDF Compilation Phase Complete ==="
 
-# Pattern rules matched precisely to their decoupled variant manifests
-$(OUTDIR)/%_A4+singer.pdf: songbooks/%_A4+singer.tex $(OUTDIR)/%_singer_songs_list.tex
+$(OUTDIR)/%_A4+singer.pdf: songbooks/%_A4+singer.tex $(LISTDIR)/%_singer_songs_list.tex
 	@echo "=== Compiling $< (Singer A4) ==="
 	pdflatex -interaction=nonstopmode -output-directory=$(OUTDIR) $<
 	pdflatex -interaction=nonstopmode -output-directory=$(OUTDIR) $<
 
-$(OUTDIR)/%_A5+singer.pdf: songbooks/%_A5+singer.tex $(OUTDIR)/%_singer_songs_list.tex
+$(OUTDIR)/%_A5+singer.pdf: songbooks/%_A5+singer.tex $(LISTDIR)/%_singer_songs_list.tex
 	@echo "=== Compiling $< (Singer A5) ==="
 	pdflatex -interaction=nonstopmode -output-directory=$(OUTDIR) $<
 	pdflatex -interaction=nonstopmode -output-directory=$(OUTDIR) $<
 
-$(OUTDIR)/%_A4+musician.pdf: songbooks/%_A4+musician.tex $(OUTDIR)/%_musician_songs_list.tex
+$(OUTDIR)/%_A4+musician.pdf: songbooks/%_A4+musician.tex $(LISTDIR)/%_musician_songs_list.tex
 	@echo "=== Compiling $< (Musician A4) ==="
 	pdflatex -interaction=nonstopmode -output-directory=$(OUTDIR) $<
 	pdflatex -interaction=nonstopmode -output-directory=$(OUTDIR) $<
 
-$(OUTDIR)/%_A5+musician.pdf: songbooks/%_A5+musician.tex $(OUTDIR)/%_musician_songs_list.tex
+$(OUTDIR)/%_A5+musician.pdf: songbooks/%_A5+musician.tex $(LISTDIR)/%_musician_songs_list.tex
 	@echo "=== Compiling $< (Musician A5) ==="
 	pdflatex -interaction=nonstopmode -output-directory=$(OUTDIR) $<
 	pdflatex -interaction=nonstopmode -output-directory=$(OUTDIR) $<
@@ -82,9 +100,24 @@ deliver:
 		exit 1; \
 	fi
 
+booklets:
+	@echo "=== Generating 12 Brochure Booklets ==="
+	rm -rf $(BOOKDIR)
+	mkdir -p $(OUTDIR) $(BOOKDIR)
+	@for pdf in $(FINAL_PDF_NAMES); do \
+		echo "Processing booklet for $$pdf..."; \
+		cp "$(DISTDIR)/$$pdf" $(OUTDIR)/; \
+		pushd $(OUTDIR) > /dev/null; \
+		pdfbook2 -np a4paper "$$pdf"; \
+		BASE_NAME=$${pdf%.pdf}; \
+		mv "$${BASE_NAME}-book.pdf" "../$(BOOKDIR)/$${BASE_NAME}+book.pdf"; \
+		popd > /dev/null; \
+	done
+	@echo "=== Booklet Generation Complete! Brochures are isolated in /$(BOOKDIR) ==="
+
 clean:
-	@echo "=== Wiping Build and Distribution Folders ==="
+	@echo "=== Wiping Build, Distribution, and Book Folders ==="
 	rm -rf $(OUTDIR)
 	rm -rf $(DISTDIR)
-	rm -rf songs/*/src/*
+	rm -rf $(BOOKDIR)
 	rm -rf artifacts

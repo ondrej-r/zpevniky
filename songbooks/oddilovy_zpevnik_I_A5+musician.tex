@@ -26,6 +26,10 @@
 
 \newcounter{choruscount}
 
+% --- Change spacing ---
+\versesep=14pt plus 6pt minus 8pt
+\baselineadj=0pt plus 0pt minus 0pt
+
 % === Patch chorus formating ===
 \xpatchcmd{\justifyleft}
   {\SB@cbarshift}
@@ -204,7 +208,7 @@
 
 \begin{songs}{}
   \allsongs{
-    \input{build/oddilovy_zpevnik_I_musician_songs_list.tex}
+    \input{songslists/oddilovy_zpevnik_I_musician_songs_list.tex}
   }
 \end{songs}
 
