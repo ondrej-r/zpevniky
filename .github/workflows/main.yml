@@ -43,8 +43,8 @@ jobs:
     - name: Package Release Assets
       run: |
         echo "=== Zipping production bundles ==="
-        zip -9j songbooks_file.zip dist/*
-        zip -9j songbooks_paper.zip book/*
+        zip -9j songbooks_file.zip dist/*.pdf
+        zip -9j songbooks_paper.zip book/*.pdf
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
