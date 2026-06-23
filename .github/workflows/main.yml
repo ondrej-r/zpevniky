@@ -27,7 +27,8 @@ jobs:
           texlive-latex-extra \
           texlive-music \
           make \
-          python3
+          python3 \
+          zip
 
     - name: Run Build Pipeline
       run: |
@@ -39,11 +40,21 @@ jobs:
       run: |
         echo "version=v$(date +'%Y.%m.%d')-${{ github.run_number }}" >> $GITHUB_OUTPUT
 
+    - name: Package Release Assets
+      run: |
+        echo "=== Zipping production bundles ==="
+        zip -9j songbooks_file.zip dist/*
+        zip -9j songbooks_paper.zip book/*
+
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ steps.tag.outputs.version }}
         name: Songbooks ${{ steps.tag.outputs.version }}
-        files: dist/*.pdf
+        files: |
+          songbooks_file.zip
+          songbooks_paper.zip
+          dist/*.pdf
+          book/*.pdf
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
