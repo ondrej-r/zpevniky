@@ -46,6 +46,8 @@ jobs:
         echo "=== Zipping production bundles ==="
         zip -9j songbooks_file.zip dist/*.pdf
         zip -9j songbooks_paper.zip book/*.pdf
+        zip -9j songbooks_covers_file.zip frontcovers-files/*.pdf
+        zip -9j songbooks_covers_paper.zip frontcovers-papers/*.pdf
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
@@ -55,7 +57,11 @@ jobs:
         files: |
           songbooks_file.zip
           songbooks_paper.zip
+          songbooks_covers_file.zip
+          songbooks_covers_paper.zip
           dist/*.pdf
           book/*.pdf
+          frontcovers-files/*.pdf
+          frontcovers-papers/*.pdf
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
