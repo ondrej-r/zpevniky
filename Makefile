@@ -108,7 +108,7 @@ booklets:
 		echo "Processing booklet for $$pdf..."; \
 		cp "$(DISTDIR)/$$pdf" $(OUTDIR)/; \
 		pushd $(OUTDIR) > /dev/null; \
-		pdfbook2 -np a4paper "$$pdf"; \
+		pdfbook2 -nsp a4paper "$$pdf"; \
 		BASE_NAME=$${pdf%.pdf}; \
 		mv "$${BASE_NAME}-book.pdf" "../$(BOOKDIR)/$${BASE_NAME}+book.pdf"; \
 		popd > /dev/null; \

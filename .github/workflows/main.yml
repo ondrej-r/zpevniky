@@ -44,9 +44,6 @@ jobs:
     - name: Package Release Assets
       run: |
         echo "=== Zipping production bundles ==="
-        ls -la
-        ls -la dist
-        ls -la book
         zip -9j songbooks_file.zip dist/*.pdf
         zip -9j songbooks_paper.zip book/*.pdf
 
