@@ -199,6 +199,9 @@ def convert_song_text(text, singers_edition=False):
     verse_count = 0
     chorus_count = 0
 
+    # Store normalized string fingerprints of choruses to identify repeats
+    first_chorus_fingerprint = None
+
     for block in blocks:
         is_chorus_block = False
         is_starred = False
@@ -239,15 +242,28 @@ def convert_song_text(text, singers_edition=False):
         if not final_lines or all(not line.strip() for line in final_lines):
             final_lines = ["\\phantom{}"]
 
+        block_content = "\n".join(final_lines)
+
+        # Check for matching subsequent choruses using strict normalized space compression
+        is_repeat = False
+        if is_chorus_block:
+            current_fingerprint = " ".join(block_content.split())
+            if first_chorus_fingerprint is None:
+                first_chorus_fingerprint = current_fingerprint
+            else:
+                if current_fingerprint == first_chorus_fingerprint:
+                    is_repeat = True
+
         # Parse environment block configuration dynamically
         if is_chorus_block:
-            start_tag = "\\beginchorus{}"
+            if is_repeat:
+                start_tag = "\\repeatingchorus{}\n\\beginchorus{}"
+            else:
+                start_tag = "\\beginchorus{}"
             end_tag = "\\endchorus{}"
         else:
             start_tag = "\\beginverse*{}" if is_starred else "\\beginverse{}"
             end_tag = "\\endverse{}"
-
-        block_content = "\n".join(final_lines)
 
         # Inject structural block layout overrides
         if singers_edition and not is_starred:

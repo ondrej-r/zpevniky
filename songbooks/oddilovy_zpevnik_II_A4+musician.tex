@@ -14,7 +14,7 @@
 % \usepackage[chorded,transposecapos,noshading,nomeasures]{songs}
 
 % =================================================================
-% TOGGLE SWITCH: Set to 1 to hide subsequent choruses, 0 to show all
+% TOGGLE SWITCH: Set to 1 to hide repeating choruses, 0 to show all
 \newcommand{\HideSubsequentChoruses}{0}
 % =================================================================
 
@@ -25,6 +25,11 @@
 \makeatletter
 
 \newcounter{choruscount}
+
+% --- Automated Repetition Engine Setup ---
+\newif\ifisrepeatingchorus%
+\isrepeatingchorusfalse%
+\newcommand{\repeatingchorus}{\global\isrepeatingchorustrue}
 
 % --- Change spacing ---
 \versesep=14pt plus 6pt minus 8pt
@@ -71,10 +76,11 @@
 
 \xpretocmd{\endchorus}{%
   \ifnum\HideSubsequentChoruses=1\relax%
-    \ifnum\value{choruscount}>1\relax%
+    \ifisrepeatingchorus%
       \endgroup\egroup%
     \fi%
   \fi%
+  \global\isrepeatingchorusfalse% Reset state context safely
 }{}{}
 
 \xpatchcmd{\SB@@beginchorus}
@@ -93,13 +99,12 @@
       \ifvnumbered%
         \def\SB@everypar{%
           \ifnum\HideSubsequentChoruses=1\relax%
-            \ifnum\value{choruscount}>1\relax%
+            \ifisrepeatingchorus%
               \chordedfalse%
               \leavevmode\hbox%
               to \versenumwidth{R:\hfil}%
               \gdef\SB@everypar{}%
-              \setbox\z@\vbox\bgroup\begingroup%
-              \chordedtrue%
+              \setbox\z@\vbox\bgroup\begingroup\chordedtrue%
             \else%
               \setbox\SB@box\hbox{R:}%
               \ifdim\wd\SB@box<\versenumwidth%
