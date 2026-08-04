@@ -28,7 +28,14 @@ R: Listopadový písně od léta už slýchám,
    F                        G
    vím, že právě zpívá listopad.
 
-R:
+            F        C          G
+R: Listopadový písně od léta už slýchám,
+            Ami C            G
+   vítr ledový, přinesl je k nám.
+              F           C          G
+   Tak mě nečekej, dneska nikam nepospíchám,
+            Ami C           G
+   listopadový, písni naslouchám.
 
    G C G C
 *:
@@ -42,7 +49,14 @@ R:
    F                      G
    píseň, co mě učil listopad.
 
-R:
+            F        C          G
+R: Listopadový písně od léta už slýchám,
+            Ami C            G
+   vítr ledový, přinesl je k nám.
+              F           C          G
+   Tak mě nečekej, dneska nikam nepospíchám,
+            Ami C           G
+   listopadový, písni naslouchám.
 
    G C G C
 *:
